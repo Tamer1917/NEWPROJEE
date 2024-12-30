@@ -123,6 +123,8 @@
             const deltaRow = toRow - fromRow;
             const deltaCol = toCol - fromCol;
 
+            if (!isOpponentPiece(target) && target) return false; // لا يمكن التحرك لمربع به قطعة من نفس اللون
+
             switch (piece.toLowerCase()) {
                 case 'p': // الجندي
                     const direction = piece === 'P' ? -1 : 1;
@@ -182,10 +184,49 @@
             return true;
         }
 
-        // باقي الكود كما هو (لمس، نقل القطع، تبديل الأدوار...)
+        function onSquareClick(row, col) {
+            const piece = initialBoard[row][col];
+            if (selectedSquare) {
+                const [prevRow, prevCol] = selectedSquare;
+                if (isValidMove(prevRow, prevCol, row, col)) {
+                    movePiece(prevRow, prevCol, row, col);
+                    changeTurn();
+                }
+                deselectSquare();
+            } else if (piece && isPieceOfCurrentPlayer(piece)) {
+                selectSquare(row, col);
+            }
+        }
 
-        createBoard();
-        startTimer();
-    </script>
-</body>
-</html>
+        function selectSquare(row, col) {
+            if (selectedSquare) deselectSquare();
+            selectedSquare = [row, col];
+            const square = getSquareElement(row, col);
+            square.classList.add('selected');
+        }
+
+        function deselectSquare() {
+            if (selectedSquare) {
+                const [row, col] = selectedSquare;
+                const square = getSquareElement(row, col);
+                square.classList.remove('selected');
+                selectedSquare = null;
+            }
+        }
+
+        function getSquareElement(row, col) {
+            return document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
+        }
+
+        function isPieceOfCurrentPlayer(piece) {
+            if (currentPlayer === 'white' && piece === piece.toUpperCase()) return true;
+            if (currentPlayer === 'black' && piece === piece.toLowerCase()) return true;
+            return false;
+        }
+
+        function movePiece(fromRow, fromCol, toRow, toCol) {
+            const piece = initialBoard[fromRow][fromCol];
+            initialBoard[toRow][toCol] = piece;
+            initialBoard[fromRow][fromCol] = '';
+            renderBoard();
+        }
