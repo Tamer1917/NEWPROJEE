@@ -229,7 +229,8 @@
 
         function getSquareElement(row, col) {
             return document.querySelector(`.square[data-row="${row}"][data-col="${col
- }
+  return document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
+        }
 
         function renderBoard() {
             const squares = document.querySelectorAll('.square');
