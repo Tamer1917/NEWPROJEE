@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>لعبة الشطرنج</title>
     <style>
         /* تم الحفاظ على الأنماط الأساسية */
@@ -13,7 +13,6 @@
             width: 480px;
             height: 480px;
             margin: 50px auto;
-            transform: scale(0.7);
         }
         .square {
             width: 60px;
@@ -65,65 +64,6 @@
             border-radius: 5px;
             background-color: #4CAF50;
             color: white;
-        }
-
-        /* قواعد التصميم المتجاوب */
-        @media (max-width: 768px) {
-            .board {
-                width: 100%;  /* اجعل اللوحة تأخذ العرض الكامل للشاشة */
-                height: auto;  /* جعل الارتفاع يتناسب مع العرض */
-            }
-
-            .square {
-                width: 12vw;  /* استخدم العرض النسبي (12% من عرض الشاشة) */
-                height: 12vw;  /* استخدم نفس النسبة للارتفاع */
-            }
-
-            .piece {
-                font-size: 24px;  /* تصغير حجم القطع */
-            }
-
-            .turn-indicator,
-            .timer {
-                font-size: 18px;  /* تصغير النصوص */
-            }
-
-            .timer-container {
-                flex-direction: column;  /* جعل مؤقتات اللاعبين تتراص عموديًا */
-            }
-
-            .controls {
-                font-size: 14px;  /* تصغير أزرار التحكم */
-            }
-
-            .control-button {
-                font-size: 14px;  /* تصغير حجم الأزرار */
-            }
-        }
-
-        @media (max-width: 480px) {
-            .board {
-                width: 100%;
-                height: 60vw;  /* عرض اللوحة بنسبة 60% من عرض الشاشة */
-            }
-
-            .square {
-                width: 10vw;  /* تصغير المربعات لتتناسب مع الشاشات الصغيرة */
-                height: 10vw;
-            }
-
-            .piece {
-                font-size: 20px;  /* تصغير حجم القطع أكثر على الشاشات الصغيرة */
-            }
-
-            .turn-indicator,
-            .timer {
-                font-size: 16px;  /* تصغير النصوص بشكل أكبر */
-            }
-
-            .controls {
-                font-size: 12px;  /* تصغير أزرار التحكم بشكل أكبر */
-            }
         }
     </style>
 </head>
@@ -271,12 +211,21 @@
         }
 
         function movePiece(fromRow, fromCol, toRow, toCol) {
-            initialBoard[toRow][toCol] = initialBoard[fromRow][fromCol];
+            const piece = initialBoard[fromRow][fromCol];
+            initialBoard[toRow][toCol] = piece;
             initialBoard[fromRow][fromCol] = '';
-            refreshBoard();
+            renderBoard();
         }
 
-        function refreshBoard() {
+        function changeTurn() {
+            currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+            turnIndicator.textContent = `دور اللاعب: ${currentPlayer === 'white' ? 'الأبيض' : 'الأسود'}`;
+            resetTimers();
+            stopTimer();
+            startTimer();
+        }
+
+        function renderBoard() {
             const squares = document.querySelectorAll('.square');
             squares.forEach(square => {
                 const row = square.dataset.row;
@@ -292,37 +241,22 @@
             });
         }
 
-        function changeTurn() {
-            currentPlayer = (currentPlayer === 'white') ? 'black' : 'white';
-            turnIndicator.textContent = `دور اللاعب: ${currentPlayer === 'white' ? 'الأبيض' : 'الأسود'}`;
-            resetTimers();
-        }
-
         undoButton.addEventListener('click', () => {
-            const lastMove = history.pop();
-            if (lastMove) {
+            if (history.length > 0) {
+                const lastMove = history.pop();
                 initialBoard[lastMove.fromRow][lastMove.fromCol] = lastMove.piece;
                 initialBoard[lastMove.toRow][lastMove.toCol] = '';
-                refreshBoard();
-                changeTurn();
+                renderBoard();
+                changeTurn(); // التبديل بين اللاعبين
             }
         });
 
         resetButton.addEventListener('click', () => {
-            initialBoard = [
-                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-                ['', '', '', '', '', '', '', ''],
-                ['', '', '', '', '', '', '', ''],
-                ['', '', '', '', '', '', '', ''],
-                ['', '', '', '', '', '', '', ''],
-                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-                ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
-            ];
             history = [];
-            currentPlayer = 'white';
+            initialBoard = [...initialBoard]; // إعادة تعيين اللوحة
+            renderBoard();
             resetTimers();
-            refreshBoard();
+            changeTurn();
         });
 
         createBoard();
