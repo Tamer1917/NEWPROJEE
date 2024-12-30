@@ -84,9 +84,6 @@
 
         let currentPlayer = 'white';
         let selectedSquare = null;
-        let whiteTimeLeft = 40;
-        let blackTimeLeft = 40;
-        let timer;
 
         function createBoard() {
             for (let row = 0; row < 8; row++) {
@@ -105,10 +102,6 @@
                     }
 
                     square.addEventListener('click', () => onSquareClick(row, col));
-                    square.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        onSquareClick(row, col);
-                    });
                     board.appendChild(square);
                 }
             }
@@ -118,47 +111,64 @@
             const piece = initialBoard[fromRow][fromCol];
             const target = initialBoard[toRow][toCol];
 
-            if (!piece) return false; // لا يمكن تحريك مربع فارغ
+            if (!piece) return false; // مربع فارغ
 
             const deltaRow = toRow - fromRow;
             const deltaCol = toCol - fromCol;
 
-            if (!isOpponentPiece(target) && target) return false; // لا يمكن التحرك لمربع به قطعة من نفس اللون
+            if (target && isSamePlayerPiece(target)) return false; // لا يمكن التحرك إلى مربع يحتوي على قطعة من نفس اللاعب
 
             switch (piece.toLowerCase()) {
                 case 'p': // الجندي
-                    const direction = piece === 'P' ? -1 : 1;
-                    if (deltaCol === 0 && deltaRow === direction && !target) return true;
-                    if (deltaCol === 0 && deltaRow === 2 * direction && fromRow === (piece === 'P' ? 6 : 1) && !target) return true;
-                    if (Math.abs(deltaCol) === 1 && deltaRow === direction && target && isOpponentPiece(target)) return true;
-                    break;
+                    return validatePawnMove(piece, fromRow, fromCol, toRow, toCol, deltaRow, deltaCol, target);
                 case 'r': // القلعة
-                    if (deltaRow === 0 || deltaCol === 0) return pathIsClear(fromRow, fromCol, toRow, toCol);
-                    break;
+                    return validateRookMove(fromRow, fromCol, toRow, toCol);
                 case 'n': // الحصان
-                    if ((Math.abs(deltaRow) === 2 && Math.abs(deltaCol) === 1) || (Math.abs(deltaRow) === 1 && Math.abs(deltaCol) === 2)) return true;
-                    break;
+                    return validateKnightMove(deltaRow, deltaCol);
                 case 'b': // الفيل
-                    if (Math.abs(deltaRow) === Math.abs(deltaCol)) return pathIsClear(fromRow, fromCol, toRow, toCol);
-                    break;
+                    return validateBishopMove(fromRow, fromCol, toRow, toCol);
                 case 'q': // الملكة
-                    if (deltaRow === 0 || deltaCol === 0 || Math.abs(deltaRow) === Math.abs(deltaCol)) return pathIsClear(fromRow, fromCol, toRow, toCol);
-                    break;
+                    return validateQueenMove(fromRow, fromCol, toRow, toCol);
                 case 'k': // الملك
-                    if (Math.abs(deltaRow) <= 1 && Math.abs(deltaCol) <= 1) return true;
-                    if (isCastleMove(fromRow, fromCol, toRow, toCol)) return true; // التبييت
-                    break;
+                    return validateKingMove(deltaRow, deltaCol);
+                default:
+                    return false;
             }
+        }
+
+        function validatePawnMove(piece, fromRow, fromCol, toRow, toCol, deltaRow, deltaCol, target) {
+            const direction = piece === 'P' ? -1 : 1;
+            if (deltaCol === 0 && deltaRow === direction && !target) return true;
+            if (deltaCol === 0 && deltaRow === 2 * direction && !target && ((piece === 'P' && fromRow === 6) || (piece === 'p' && fromRow === 1))) return true;
+            if (Math.abs(deltaCol) === 1 && deltaRow === direction && target && isOpponentPiece(target)) return true;
             return false;
+        }
+
+        function validateRookMove(fromRow, fromCol, toRow, toCol) {
+            return (fromRow === toRow || fromCol === toCol) && pathIsClear(fromRow, fromCol, toRow, toCol);
+        }
+
+        function validateKnightMove(deltaRow, deltaCol) {
+            return (Math.abs(deltaRow) === 2 && Math.abs(deltaCol) === 1) || (Math.abs(deltaRow) === 1 && Math.abs(deltaCol) === 2);
+        }
+
+        function validateBishopMove(fromRow, fromCol, toRow, toCol) {
+            return Math.abs(toRow - fromRow) === Math.abs(toCol - fromCol) && pathIsClear(fromRow, fromCol, toRow, toCol);
+        }
+
+        function validateQueenMove(fromRow, fromCol, toRow, toCol) {
+            return validateRookMove(fromRow, fromCol, toRow, toCol) || validateBishopMove(fromRow, fromCol, toRow, toCol);
+        }
+
+        function validateKingMove(deltaRow, deltaCol) {
+            return Math.abs(deltaRow) <= 1 && Math.abs(deltaCol) <= 1;
         }
 
         function pathIsClear(fromRow, fromCol, toRow, toCol) {
             const deltaRow = Math.sign(toRow - fromRow);
             const deltaCol = Math.sign(toCol - fromCol);
-
             let row = fromRow + deltaRow;
             let col = fromCol + deltaCol;
-
             while (row !== toRow || col !== toCol) {
                 if (initialBoard[row][col]) return false;
                 row += deltaRow;
@@ -171,17 +181,8 @@
             return (currentPlayer === 'white' && piece === piece.toLowerCase()) || (currentPlayer === 'black' && piece === piece.toUpperCase());
         }
 
-        function isCastleMove(fromRow, fromCol, toRow, toCol) {
-            // تحقق من التبييت
-            if (fromRow !== toRow || Math.abs(toCol - fromCol) !== 2) return false;
-            const king = initialBoard[fromRow][fromCol];
-            if (king.toLowerCase() !== 'k') return false;
-            const direction = toCol > fromCol ? 1 : -1;
-            for (let col = fromCol + direction; col !== toCol; col += direction) {
-                if (initialBoard[fromRow][col]) return false;
-            }
-            // يمكن إضافة تحقق من الحالات الأخرى مثل عدم تعرض الملك للهجوم
-            return true;
+        function isSamePlayerPiece(piece) {
+            return (currentPlayer === 'white' && piece === piece.toUpperCase()) || (currentPlayer === 'black' && piece === piece.toLowerCase());
         }
 
         function onSquareClick(row, col) {
@@ -193,7 +194,7 @@
                     changeTurn();
                 }
                 deselectSquare();
-            } else if (piece && isPieceOfCurrentPlayer(piece)) {
+            } else if (piece && isSamePlayerPiece(piece)) {
                 selectSquare(row, col);
             }
         }
@@ -214,19 +215,39 @@
             }
         }
 
-        function getSquareElement(row, col) {
-            return document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
-        }
-
-        function isPieceOfCurrentPlayer(piece) {
-            if (currentPlayer === 'white' && piece === piece.toUpperCase()) return true;
-            if (currentPlayer === 'black' && piece === piece.toLowerCase()) return true;
-            return false;
-        }
-
         function movePiece(fromRow, fromCol, toRow, toCol) {
             const piece = initialBoard[fromRow][fromCol];
             initialBoard[toRow][toCol] = piece;
             initialBoard[fromRow][fromCol] = '';
             renderBoard();
         }
+
+        function changeTurn() {
+            currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+            turnIndicator.textContent = `دور اللاعب: ${currentPlayer === 'white' ? 'الأبيض' : 'الأسود'}`;
+        }
+
+        function getSquareElement(row, col) {
+            return document.querySelector(`.square[data-row="${row}"][data-col="${col
+ }
+
+        function renderBoard() {
+            const squares = document.querySelectorAll('.square');
+            squares.forEach(square => {
+                const row = square.dataset.row;
+                const col = square.dataset.col;
+                const piece = initialBoard[row][col];
+                square.innerHTML = '';
+                if (piece) {
+                    const pieceElement = document.createElement('span');
+                    pieceElement.classList.add('piece');
+                    pieceElement.textContent = pieces[piece];
+                    square.appendChild(pieceElement);
+                }
+            });
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
