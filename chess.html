@@ -56,7 +56,7 @@
 <body>
     <div class="turn-indicator" id="turnIndicator">دور اللاعب: الأبيض</div>
     <div class="timer-container">
-        <div class="timer" id="whiteTimer">الوقت الاحمر: 40</div>
+        <div class="timer" id="whiteTimer">الوقت الأبيض: 40</div>
         <div class="timer" id="blackTimer">الوقت الأسود: 40</div>
     </div>
     <div class="board" id="board"></div>
@@ -144,6 +144,7 @@
                     break;
                 case 'k': // الملك
                     if (Math.abs(deltaRow) <= 1 && Math.abs(deltaCol) <= 1) return true;
+                    if (isCastleMove(fromRow, fromCol, toRow, toCol)) return true; // التبييت
                     break;
             }
             return false;
@@ -166,6 +167,19 @@
 
         function isOpponentPiece(piece) {
             return (currentPlayer === 'white' && piece === piece.toLowerCase()) || (currentPlayer === 'black' && piece === piece.toUpperCase());
+        }
+
+        function isCastleMove(fromRow, fromCol, toRow, toCol) {
+            // تحقق من التبييت
+            if (fromRow !== toRow || Math.abs(toCol - fromCol) !== 2) return false;
+            const king = initialBoard[fromRow][fromCol];
+            if (king.toLowerCase() !== 'k') return false;
+            const direction = toCol > fromCol ? 1 : -1;
+            for (let col = fromCol + direction; col !== toCol; col += direction) {
+                if (initialBoard[fromRow][col]) return false;
+            }
+            // يمكن إضافة تحقق من الحالات الأخرى مثل عدم تعرض الملك للهجوم
+            return true;
         }
 
         // باقي الكود كما هو (لمس، نقل القطع، تبديل الأدوار...)
