@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -49,8 +48,8 @@
             border-radius: 5px;
             min-width: 100px;
             text-align: center;
-            color: white; /* النص باللون الأبيض */
-            background-color: #333; /* خلفية داكنة لتوفير تباين جيد */
+            color: white;
+            background-color: #333;
         }
     </style>
 </head>
@@ -119,14 +118,16 @@
             timer = setInterval(() => {
                 if (currentPlayer === 'white') {
                     whiteTimeLeft--;
-                    whiteTimerElement.textContent = الوقت الأبيض: ${whiteTimeLeft};
+                    whiteTimerElement.textContent = `الوقت الأبيض: ${whiteTimeLeft}`;
                     if (whiteTimeLeft <= 0) {
+                        stopTimer();
                         changeTurn();
                     }
                 } else {
                     blackTimeLeft--;
-                    blackTimerElement.textContent = الوقت الأسود: ${blackTimeLeft};
+                    blackTimerElement.textContent = `الوقت الأسود: ${blackTimeLeft}`;
                     if (blackTimeLeft <= 0) {
+                        stopTimer();
                         changeTurn();
                     }
                 }
@@ -140,8 +141,8 @@
         function resetTimers() {
             whiteTimeLeft = 40;
             blackTimeLeft = 40;
-            whiteTimerElement.textContent = الوقت الاحمر: 40;
-            blackTimerElement.textContent = الوقت الأسود: 40;
+            whiteTimerElement.textContent = `الوقت الأبيض: 40`;
+            blackTimerElement.textContent = `الوقت الأسود: 40`;
         }
 
         function onSquareClick(row, col) {
@@ -175,7 +176,7 @@
         }
 
         function getSquareElement(row, col) {
-            return document.querySelector(.square[data-row="${row}"][data-col="${col}"]);
+            return document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
         }
 
         function isPieceOfCurrentPlayer(piece) {
@@ -193,12 +194,11 @@
             initialBoard[toRow][toCol] = piece;
             initialBoard[fromRow][fromCol] = '';
             renderBoard();
-         
         }
 
         function changeTurn() {
             currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
-            turnIndicator.textContent = دور اللاعب: ${currentPlayer === 'white' ? 'الأبيض' : 'الأسود'};
+            turnIndicator.textContent = `دور اللاعب: ${currentPlayer === 'white' ? 'الأبيض' : 'الأسود'}`;
             resetTimers();
             stopTimer();
             startTimer();
